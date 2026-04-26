@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Dan's House</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0e0d0b;
+  --bg2: #141310;
+  --gold: #c9a84c;
+  --gold-dim: #a07830;
+  --cream: #f0ead8;
+  --cream-dim: #9a9080;
+  --border: rgba(201,168,76,0.18);
+  --border-soft: rgba(240,234,216,0.08);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--cream);
+  font-family: 'DM Mono', monospace;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 999;
+}
+.wrap { max-width: 580px; margin: 0 auto; padding: 0 1.25rem 4rem; }
+
+/* HEADER */
+header { text-align: center; padding: 3.5rem 1rem 2rem; }
+.logo-line { display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 0.5rem; }
+.logo-line::before, .logo-line::after {
+  content: ''; flex: 1; height: 0.5px;
+}
+.logo-line::before { background: linear-gradient(to right, transparent, var(--gold)); }
+.logo-line::after  { background: linear-gradient(to left,  transparent, var(--gold)); }
+h1 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(36px, 10vw, 54px);
+  font-weight: 300;
+  letter-spacing: 6px;
+  color: var(--cream);
+  text-transform: uppercase;
+  line-height: 1;
+}
+.subtitle { font-size: 10px; letter-spacing: 3px; color: var(--gold); text-transform: uppercase; margin-top: 6px; }
+.aviso {
+  margin: 1.5rem auto 0;
+  max-width: 360px;
+  border: 0.5px solid var(--border);
+  border-radius: 4px;
+  padding: 10px 16px;
+  font-size: 11px;
+  color: var(--cream-dim);
+  letter-spacing: 0.5px;
+  line-height: 1.6;
+}
+.aviso strong { color: var(--gold); font-weight: 400; }
+
+/* NAV */
+nav {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 2.5rem 0;
+  border-top: 0.5px solid var(--border-soft);
+  border-bottom: 0.5px solid var(--border-soft);
+}
+nav button {
+  background: transparent; border: none;
+  color: var(--cream-dim);
+  font-family: 'DM Mono', monospace;
+  font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+  padding: 14px 16px; cursor: pointer; transition: color 0.2s;
+  position: relative;
+}
+nav button::after {
+  content: ''; position: absolute;
+  bottom: 0; left: 50%; right: 50%;
+  height: 1.5px; background: var(--gold);
+  transition: left 0.25s, right 0.25s;
+}
+nav button.active { color: var(--cream); }
+nav button.active::after { left: 12%; right: 12%; }
+nav button:hover { color: var(--cream); }
+
+/* SECTIONS */
+.section { display: none; animation: fadeUp 0.3s ease; }
+.section.visible { display: block; }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.section-label {
+  font-size: 9px; letter-spacing: 3px; text-transform: uppercase;
+  color: var(--gold-dim); margin-bottom: 1.5rem;
+}
+
+/* ITEMS */
+.item {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  gap: 12px; padding: 1.1rem 0;
+  border-bottom: 0.5px solid var(--border-soft);
+}
+.item:last-child { border-bottom: none; }
+.item-left { flex: 1; }
+.item-top { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 5px; }
+.item-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px; font-weight: 400;
+  color: var(--cream); letter-spacing: 0.3px; line-height: 1.2;
+}
+.item-desc { font-size: 11px; color: var(--cream-dim); line-height: 1.7; letter-spacing: 0.3px; }
+
+/* TAGS */
+.tag {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
+  padding: 2px 8px; border-radius: 2px; white-space: nowrap; flex-shrink: 0;
+}
+.tag-picante  { background: rgba(192,57,43,0.18);  color: #e07060; border: 0.5px solid rgba(192,57,43,0.35); }
+.tag-clasico  { background: rgba(201,168,76,0.12); color: #c9a84c; border: 0.5px solid rgba(201,168,76,0.3); }
+.tag-veggie   { background: rgba(74,124,89,0.18);  color: #7ec995; border: 0.5px solid rgba(74,124,89,0.35); }
+.tag-estrella { background: rgba(107,79,160,0.18); color: #b09ce0; border: 0.5px solid rgba(107,79,160,0.35); }
+.tag-rapido   { background: rgba(46,95,138,0.18);  color: #7ab4dc; border: 0.5px solid rgba(46,95,138,0.35); }
+.tag-casa     { background: rgba(181,96,26,0.18);  color: #e09550; border: 0.5px solid rgba(181,96,26,0.35); }
+.tag-suave    { background: rgba(160,120,48,0.15); color: #d4a855; border: 0.5px solid rgba(160,120,48,0.3); }
+
+/* CAFÉ PRENSA CARD */
+.prensa-card {
+  border: 0.5px solid var(--border);
+  border-radius: 6px;
+  padding: 1.5rem 1.5rem 1.4rem;
+  margin-bottom: 1.5rem;
+  background: var(--bg2);
+  position: relative;
+  overflow: hidden;
+}
+.prensa-card::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 1.5px;
+  background: linear-gradient(to right, transparent, var(--gold), transparent);
+}
+.prensa-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 26px; font-weight: 300; font-style: italic;
+  color: var(--cream); margin-bottom: 3px;
+}
+.prensa-tagline {
+  font-size: 9px; letter-spacing: 2.5px; text-transform: uppercase;
+  color: var(--gold); margin-bottom: 1.2rem;
+}
+.prensa-desc {
+  font-size: 11px; color: var(--cream-dim); margin-bottom: 1.4rem; line-height: 1.6;
+}
+.granos-label {
+  font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+  color: #4a4030; margin-bottom: 10px;
+}
+.granos { display: flex; flex-direction: column; gap: 7px; }
+.grano {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 12px; color: var(--cream-dim); letter-spacing: 0.3px;
+}
+.grano::before {
+  content: ''; width: 4px; height: 4px; border-radius: 50%;
+  background: var(--gold); opacity: 0.5; flex-shrink: 0;
+}
+.otros-cafes { margin-top: 1.5rem; padding-top: 1.2rem; border-top: 0.5px solid var(--border-soft); }
+
+/* FOOTER */
+footer {
+  text-align: center; padding: 2.5rem 0 1rem;
+  font-size: 10px; letter-spacing: 2px; color: #2e2a22; text-transform: uppercase;
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="logo-line"><h1>Dan's House</h1></div>
+    <p class="subtitle">menú de la casa</p>
+    <div class="aviso">
+      La carta está sujeta a la disponibilidad del momento.<br>
+      <strong>Consultá a Dan antes de pedir.</strong>
+    </div>
+  </header>
+
+  <nav>
+    <button class="active" onclick="show('cafes',this)">Cafés</button>
+    <button onclick="show('brunch',this)">Brunch</button>
+    <button onclick="show('picadas',this)">Picadas</button>
+    <button onclick="show('platos',this)">Platos</button>
+    <button onclick="show('tragos',this)">Tragos</button>
+    <button onclick="show('dulce',this)">Dulce</button>
+  </nav>
+
+  <!-- CAFÉS -->
+  <div id="cafes" class="section visible">
+    <p class="section-label">Cafés</p>
+    <div class="prensa-card">
+      <div class="prensa-name">Prensa Francesa</div>
+      <div class="prensa-tagline">Granos de especialidad · selección del momento</div>
+      <p class="prensa-desc">Preparado en prensa francesa. Preguntá qué hay disponible hoy.</p>
+      <div class="granos-label">Granos disponibles</div>
+      <div class="granos">
+        <div class="grano">Pergamino — Edición Navidad</div>
+        <div class="grano">San Alberto — Molido</div>
+        <div class="grano">Caturra de Típica</div>
+        <div class="grano">Papayo</div>
+        <div class="grano">Tabi</div>
+        <div class="grano">Bourbon Rosado</div>
+        <div class="grano">Típica de Urbania</div>
+      </div>
+    </div>
+    <div class="otros-cafes">
+      <div class="item">
+        <div class="item-left">
+          <div class="item-top"><span class="item-name">Latte</span><span class="tag tag-suave">suave</span></div>
+          <div class="item-desc">Café · leche descremada caliente</div>
+        </div>
+      </div>
+      <div class="item">
+        <div class="item-left">
+          <div class="item-top"><span class="item-name">Cocoa</span><span class="tag tag-suave">suave</span></div>
+          <div class="item-desc">Cacao · leche descremada caliente</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BRUNCH -->
+  <div id="brunch" class="section">
+    <p class="section-label">Brunch</p>
+    <div class="item">
+      <div class="item-left">
+        <div class="item-top"><span class="item-name">Huevos revueltos</span><span class="tag tag-rapido">rápido</span></div>
+        <div class="item-desc">Huevos · manteca · sal · pimienta · crema opcional · tostadas al lado</div>
+      </div>
+    </div>
+    <div class="item">
+      <div class="item-left">
+        <div class="item-top"><span class="item-name">Tostadas</span><span class="tag tag-rapido">rápido</span></div>
+        <div class="item-desc">Pan tostado · palta · sal · limón · aceite de oliva · opcional: huevo frito o poché</div>
+      </div>
+    </div>
+    <div class="item">
+      <div class="item-left">
+        <div class="item-top"><span class="item-name">Pancakes</span><span class="tag tag-clasico">clásico</span></div>
+        <div class="item-desc">Harina · huevos · leche · polvo de hornear · manteca · miel o dulce de leche encima</div>
+      </div>
+    </div>
+    <div class="item">
+      <div class="item-left">
+        <div class="item-top"><span class="item-name">Quesadillas</span><span class="tag tag-casa">de la casa</span></div>
+        <div class="item-desc">Tortillas · queso · relleno a elección · salsa · crema · en sartén hasta dorar</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PICADAS -->
+  <div id="picadas" class="section">
+    <p class="section-label">Picadas</p>
+    <div class="item">
+      <div class="item-left">
+        <div class="item-top"><span class="item-name">Fritas de la casa</span><span class="tag tag-picante">picante</span></div>
+        <div class="item-desc">Papas corte fino · especiadas · picantes</div>
+      </div>
+    </div>
+    <div class="item">
+      <div class="item-left">
+        <div class="item-top"><span class="item-name">Nuggets de pollo</span><span class="tag tag-casa">de la casa</span></div>
+        <div class="item-desc">Nuggets de pollo · mayonesa · barbacoa · mostaza</div>
+      </div>
+    </div>
+    <div class="item">
+      <div class="item-left">
+        <div class="item-top"><span class="item-name">Fiambres y quesos</span><span class="tag tag-clasico">clásico</span></div>
+        <div class="item-desc">Bondiola · lomito · gruyère · colonia · aceitunas</div>
+      </div>
+    </div>
+    <div class="item">
+      <div class="item-left">
+        <div class="item-top"><span class="item-name">Porquerías random</span><span class="tag tag-rapido">rápido</span></div>
+        <div class="item-desc">Papas chip · maní · Doritos</div>
+      </div>
+    </div>
+    <div class="item">
+      <div class="item-left">
+        <div class="item-top"><span class="item-name">Provolone</span><span class="tag tag-estrella">estrella</span></div>
+        <div class="item-desc">Queso provolone a la plancha</div>
+      </div>
+    </div>
+    <div class="item">
+      <div class="item-left">
+        <div class="item-top"><span class="item-name">Tequeños</span><span class="tag tag-estrella">estrella</span></div>
+        <div class="item-desc">Palitos de masa frita rellenos de queso</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PLATOS -->
+  <div id="platos" class="section">
+    <p class="section-label">Platos</p>
+    <div class="item">
+      <div class="item-left">
+        <div class="item-top"><span class="item-name">Omelette de la huerta</span><span class="tag tag-veggie">veggie</span></div>
+        <div class="item-desc">Huevos · pimiento · cebolla · tomate · queso · sal · pimienta · aceite de oliva</div>
+      </div>
+    </div>
+    <div class="item">
+      <div class="item-left">
+        <div class="item-top"><span class="item-name">La Burger</span><span class="tag tag-estrella">estrella</span></div>
+        <div class="item-desc">Pan brioche · medallón de carne · cheddar · lechuga · tomate · cebolla caramelizada · mayonesa</div>
+      </div>
+    </div>
+    <div class="item">
+      <div class="item-left">
+        <div class="item-top"><span class="item-name">Pollo a la plancha & puré</span><span class="tag tag-clasico">clásico</span></div>
+        <div class="item-desc">Churrasco de pechuga a la plancha · puré de papa mantecoso</div>
+      </div>
+    </div>
+    <div class="item">
+      <div class="item-left">
+        <div class="item-top"><span class="item-name">Ramen de medianoche</span><span class="tag tag-picante">picante</span></div>
+        <div class="item-desc">Ramen instantáneo · caldo picante · toppings a elección</div>
+      </div>
+    </div>
+    <div class="item">
+      <div class="item-left">
+        <div class="item-top"><span class="item-name">Saltado de carne</span><span class="tag tag-casa">de la casa</span></div>
+        <div class="item-desc">Carne en cubos · morrón · cebolla · ajo · especias · salteado en sartén</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TRAGOS -->
+  <div id="tragos" class="section">
+    <p class="section-label">Tragos</p>
+    <div class="item">
+      <div class="item-left">
+        <div class="item-top"><span class="item-name">Fernet con Coca</span><span class="tag tag-clasico">clásico</span></div>
+        <div class="item-desc">Fernet Branca · Coca-Cola · hielo · limón</div>
+      </div>
+    </div>
+    <div class="item">
+      <div class="item-left">
+        <div class="item-top"><span class="item-name">Gin tonic</span><span class="tag tag-clasico">clásico</span></div>
+        <div class="item-desc">Gin · tónica · hielo · limón · pimienta o romero opcional</div>
+      </div>
+    </div>
+    <div class="item">
+      <div class="item-left">
+        <div class="item-top"><span class="item-name">Vodka pomelo</span><span class="tag tag-rapido">fácil</span></div>
+        <div class="item-desc">Vodka · jugo de pomelo · hielo</div>
+      </div>
+    </div>
+    <div class="item">
+      <div class="item-left">
+        <div class="item-top"><span class="item-name">Vodka naranja</span><span class="tag tag-rapido">fácil</span></div>
+        <div class="item-desc">Vodka · jugo de naranja · hielo</div>
+      </div>
+    </div>
+    <div class="item">
+      <div class="item-left">
+        <div class="item-top"><span class="item-name">Jäger con Monster</span><span class="tag tag-estrella">estrella</span></div>
+        <div class="item-desc">Jägermeister · Monster Energy · hielo</div>
+      </div>
+    </div>
+    <div class="item">
+      <div class="item-left">
+        <div class="item-top"><span class="item-name">Cuba libre</span><span class="tag tag-clasico">clásico</span></div>
+        <div class="item-desc">Ron · Coca-Cola · hielo · limón</div>
+      </div>
+    </div>
+    <div class="item">
+      <div class="item-left">
+        <div class="item-top"><span class="item-name">Cerveza</span><span class="tag tag-casa">de la casa</span></div>
+        <div class="item-desc">Preguntar variedad disponible a Dan</div>
+      </div>
+    </div>
+    <div class="item">
+      <div class="item-left">
+        <div class="item-top"><span class="item-name">Agua sin gas</span><span class="tag tag-suave">suave</span></div>
+        <div class="item-desc">Agua fría sin gas</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DULCE -->
+  <div id="dulce" class="section">
+    <p class="section-label">Para el dulce</p>
+    <div class="item">
+      <div class="item-left">
+        <div class="item-top"><span class="item-name">Pancakes con dulce de leche</span><span class="tag tag-estrella">estrella</span></div>
+        <div class="item-desc">Pancakes · dulce de leche · opcional: banana o crema</div>
+      </div>
+    </div>
+    <div class="item">
+      <div class="item-left">
+        <div class="item-top"><span class="item-name">Tostadas con mermelada</span><span class="tag tag-clasico">clásico</span></div>
+        <div class="item-desc">Pan tostado · mermelada a elección</div>
+      </div>
+    </div>
+    <div class="item">
+      <div class="item-left">
+        <div class="item-top"><span class="item-name">Fruta</span><span class="tag tag-veggie">fresco</span></div>
+        <div class="item-desc">Fruta fresca de temporada</div>
+      </div>
+    </div>
+    <div class="item">
+      <div class="item-left">
+        <div class="item-top"><span class="item-name">Galletitas</span><span class="tag tag-rapido">rápido</span></div>
+        <div class="item-desc">Surtido · preguntar disponibilidad</div>
+      </div>
+    </div>
+  </div>
+
+  <footer><p>Dan's House · con amor</p></footer>
+
+</div>
+<script>
+function show(id, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('visible'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('visible');
+  btn.classList.add('active');
+}
+</script>
+</body>
+</html>
