@@ -28,7 +28,7 @@ export default async function handler(req, res) {
     }
     if (!admin) return res.status(401).json({ error: 'Necesitás iniciar sesión.' });
     if (!dbEnabled) {
-      return res.status(503).json({ error: 'No hay base de datos conectada. Configurá Supabase (ver README).' });
+      return res.status(503).json({ error: 'No hay base de datos conectada. Activá Upstash Redis en Vercel (ver README).' });
     }
 
     const patch = await readBody(req);
