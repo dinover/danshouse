@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cocina · Dan's House</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0e0d0b">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body>
+
+<!-- Puerta de entrada -->
+<div class="wrap login" id="pantalla-login" hidden>
+  <header style="padding:1rem 0 1.5rem">
+    <div class="logo-line"><h1 style="font-size:30px">Cocina</h1></div>
+    <p class="subtitle">sólo Dan</p>
+  </header>
+  <div class="card">
+    <form id="form-login">
+      <label class="field">
+        <span>Contraseña</span>
+        <input type="password" id="password" autocomplete="current-password" required>
+      </label>
+      <button class="btn btn-solid" type="submit" style="width:100%">Entrar</button>
+      <div class="error" id="login-error" hidden></div>
+    </form>
+    <p class="hint"><a href="/" style="color:var(--gold-dim)">← volver a la carta</a></p>
+  </div>
+</div>
+
+<!-- Panel -->
+<div class="wrap wrap-wide" id="pantalla-panel" hidden>
+  <header style="padding:2.5rem 0 1.5rem">
+    <div class="logo-line"><h1 style="font-size:clamp(26px,7vw,38px)">La Cocina</h1></div>
+    <p class="subtitle">qué hay en casa</p>
+  </header>
+
+  <div id="banner-modo"></div>
+
+  <div class="stats" id="stats"></div>
+
+  <nav class="panel-nav" id="tabs">
+    <button data-tab="despensa" class="active">Despensa</button>
+    <button data-tab="compras">Compras</button>
+    <button data-tab="recetas">Recetas</button>
+  </nav>
+
+  <!-- DESPENSA -->
+  <section id="tab-despensa">
+    <div class="controls">
+      <input class="search" id="buscar-ing" type="text" placeholder="Buscar ingrediente…" autocomplete="off">
+      <div class="btn-row">
+        <button class="btn btn-ghost" id="btn-basicos">Sólo los básicos</button>
+        <button class="btn btn-ghost" id="btn-vaciar">Vaciar todo</button>
+        <span class="card-sub" id="estado-guardado" style="margin-left:auto"></span>
+      </div>
+    </div>
+    <div id="grilla"></div>
+
+    <div class="card">
+      <div class="card-title">Agregar un ingrediente</div>
+      <p class="card-sub" style="margin-bottom:14px">Si compraste algo que no está en la lista, sumalo acá.</p>
+      <form id="form-ing" class="btn-row">
+        <input type="text" id="ing-nombre" placeholder="Nombre" style="flex:1;min-width:150px" required>
+        <select id="ing-cat" style="width:auto;min-width:150px"></select>
+        <button class="btn" type="submit">Agregar</button>
+      </form>
+      <div id="lista-custom" style="margin-top:14px"></div>
+    </div>
+  </section>
+
+  <!-- COMPRAS -->
+  <section id="tab-compras" hidden>
+    <div class="card">
+      <div class="card-title">Qué conviene comprar</div>
+      <p class="card-sub">Cada cosa de esta lista destraba platos nuevos apenas entra a la casa. Tocá “tengo” cuando la traigas.</p>
+    </div>
+    <div id="sugerencias"></div>
+  </section>
+
+  <!-- RECETAS -->
+  <section id="tab-recetas" hidden>
+    <div class="card">
+      <div class="card-title">Nueva receta</div>
+      <p class="card-sub" style="margin-bottom:16px">Cargá lo que necesita. Si algo se puede reemplazar, sumale alternativas con “o…”.</p>
+      <form id="form-receta">
+        <label class="field"><span>Nombre</span><input type="text" id="r-nombre" required></label>
+        <div class="btn-row" style="margin-bottom:12px">
+          <label class="field" style="flex:1;min-width:140px;margin:0"><span>Sección</span><select id="r-seccion"></select></label>
+          <label class="field" style="flex:1;min-width:140px;margin:0"><span>Etiqueta</span><select id="r-tag"></select></label>
+        </div>
+        <label class="field"><span>Descripción</span><textarea id="r-desc" placeholder="Pan tostado · palta · sal · limón"></textarea></label>
+
+        <label class="field" style="margin-bottom:6px"><span>Ingredientes</span></label>
+        <div class="btn-row" style="margin-bottom:10px">
+          <input type="text" id="r-picker" list="lista-ingredientes" placeholder="Escribí un ingrediente…" style="flex:1;min-width:170px">
+          <button class="btn btn-ghost" type="button" id="r-add-need">+ necesario</button>
+          <button class="btn btn-ghost" type="button" id="r-add-opt">+ opcional</button>
+        </div>
+        <div id="r-slots"></div>
+        <datalist id="lista-ingredientes"></datalist>
+
+        <div class="btn-row" style="margin-top:16px">
+          <button class="btn btn-solid" type="submit" id="r-guardar">Guardar receta</button>
+          <button class="btn btn-ghost" type="button" id="r-cancelar" hidden>Cancelar</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="controls"><input class="search" id="buscar-rec" type="text" placeholder="Buscar receta…" autocomplete="off"></div>
+    <div id="lista-recetas"></div>
+  </section>
+
+  <footer>
+    <p><a href="/">← ver la carta</a></p>
+    <p class="sello"><a href="#" id="salir">cerrar sesión</a></p>
+  </footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { fetchState, pushState, session, readLocal } from '/assets/api.js';
+import { buildMenu, shoppingSuggestions, entryName, nameIndex, isGroup } from '/assets/engine.js';
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
+const norm = s => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+let data = null, menu = null, names = null, meta = null;
+let patch = { pantry: [], customIngredients: [], customRecipes: [], hidden: [] };
+let pantry = new Set();
+let filtroIng = '', filtroRec = '', editando = null;
+let slots = { need: [], opt: [] };
+
+function toast(msg, malo = false) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.className = `toast show${malo ? ' bad' : ''}`;
+  clearTimeout(toast.t);
+  toast.t = setTimeout(() => { t.className = 'toast'; }, malo ? 4200 : 2000);
+}
+
+/* ── Guardado ───────────────────────────────────────── */
+let guardarTimer, guardando = false, pendiente = false;
+// Hasta que el panel no leyó el estado real, `pantry` está vacía:
+// guardar antes de eso borraría la despensa de la casa.
+let listo = false;
+
+function marcarSucio() {
+  if (!listo) return;
+  $('estado-guardado').textContent = 'sin guardar…';
+  clearTimeout(guardarTimer);
+  guardarTimer = setTimeout(guardar, 900);
+}
+
+async function guardar() {
+  clearTimeout(guardarTimer);
+  if (!listo) return;
+  if (guardando) { pendiente = true; return; }
+  guardando = true;
+  try {
+    patch.pantry = [...pantry];
+    await pushState(patch, { shared: meta.shared });
+    $('estado-guardado').textContent = meta.shared ? 'guardado' : 'guardado en este dispositivo';
+  } catch (err) {
+    $('estado-guardado').textContent = 'no se pudo guardar';
+    toast(err.message, true);
+  } finally {
+    guardando = false;
+    if (pendiente) { pendiente = false; guardar(); }
+  }
+}
+
+addEventListener('visibilitychange', () => { if (document.hidden) guardar(); });
+
+/* ── Render ─────────────────────────────────────────── */
+function recalcular() {
+  data.pantry = [...pantry];
+  menu = buildMenu(data);
+  names = nameIndex(data);
+  $('stats').innerHTML = [
+    [pantry.size, 'en casa'],
+    [menu.ready.length, 'se puede hacer'],
+    [menu.near.length, 'a un paso'],
+    [data.recipes.length, 'recetas'],
+  ].map(([n, l]) => `<div class="stat"><div class="n">${n}</div><div class="l">${l}</div></div>`).join('');
+}
+
+function renderGrilla() {
+  const q = norm(filtroIng.trim());
+  let html = '';
+  for (const cat of data.categories) {
+    const items = data.ingredients
+      .filter(i => i.cat === cat.id && (!q || norm(`${i.name} ${i.brand || ''}`).includes(q)));
+    if (!items.length) continue;
+    const tengo = items.filter(i => pantry.has(i.id)).length;
+    html += `<div class="cat-block">
+      <div class="cat-head">
+        <span class="cat-name">${esc(cat.name)}</span>
+        <span class="cat-count">${tengo}/${items.length}</span>
+      </div>
+      <div class="ing-grid">${items.map(i => `
+        <button type="button" class="ing${pantry.has(i.id) ? ' on' : ''}" data-ing="${esc(i.id)}">
+          <span class="box"></span>
+          <span class="txt">${esc(i.name)}${i.brand ? ` <span class="brand">${esc(i.brand)}</span>` : ''}</span>
+        </button>`).join('')}</div>
+    </div>`;
+  }
+  $('grilla').innerHTML = html || `<div class="vacio"><strong>Nada con ese nombre</strong>Podés agregarlo abajo.</div>`;
+}
+
+function renderCustom() {
+  const lista = patch.customIngredients || [];
+  $('lista-custom').innerHTML = !lista.length ? '' :
+    `<div class="cat-name" style="margin-bottom:8px">Agregados por vos</div>` +
+    lista.map(i => `<div class="row">
+      <div class="row-main"><div class="row-name">${esc(i.name)}</div>
+        <div class="row-sub">${esc((data.categories.find(c => c.id === i.cat) || {}).name || i.cat)}</div></div>
+      <button class="btn btn-danger" data-borrar-ing="${esc(i.id)}">Quitar</button>
+    </div>`).join('');
+}
+
+function renderSugerencias() {
+  const lista = shoppingSuggestions(data, { limit: 25 });
+  $('sugerencias').innerHTML = !lista.length
+    ? `<div class="vacio"><strong>No falta nada obvio</strong>Ningún ingrediente suelto destraba platos nuevos ahora mismo.</div>`
+    : lista.map(s => `<div class="row">
+        <div class="row-main">
+          <div class="row-name">${esc(s.name)}</div>
+          <div class="row-sub">${esc(s.recipes.slice(0, 4).join(' · '))}${s.recipes.length > 4 ? ` · +${s.recipes.length - 4}` : ''}</div>
+        </div>
+        <div class="row-num">+${s.recipes.length}</div>
+        <button class="btn" data-tengo="${esc(s.id)}">Tengo</button>
+      </div>`).join('');
+}
+
+function renderRecetas() {
+  const q = norm(filtroRec.trim());
+  const propias = new Set((patch.customRecipes || []).map(r => r.id));
+
+  const filas = data.recipes
+    .filter(r => !q || norm(`${r.name} ${r.desc || ''}`).includes(q))
+    .sort((a, b) => a.name.localeCompare(b.name, 'es'))
+    .map(r => {
+      const entrada = menu.ready.find(e => e.recipe.id === r.id) || menu.near.find(e => e.recipe.id === r.id);
+      const estado = entrada?.ready ? '<span style="color:var(--gold)">se puede hacer</span>'
+        : entrada ? `falta ${entrada.missing.map(e => esc(entryName(e, names))).join(', ')}`
+        : 'faltan varios ingredientes';
+      return `<div class="row">
+        <div class="row-main">
+          <div class="row-name">${esc(r.name)}${propias.has(r.id) ? ' <span class="tag tag-casa">tuya</span>' : ''}</div>
+          <div class="row-sub">${estado}</div>
+        </div>
+        <button class="btn btn-ghost" data-editar="${esc(r.id)}">Editar</button>
+        <button class="btn btn-danger" data-ocultar="${esc(r.id)}">Quitar</button>
+      </div>`;
+    }).join('');
+
+  const ocultas = data.hiddenRecipes || [];
+  const bloqueOcultas = ocultas.length
+    ? `<div class="cat-name" style="margin:1.6rem 0 8px">Quitadas de la carta</div>` +
+      ocultas.map(r => `<div class="row">
+        <div class="row-main"><div class="row-name">${esc(r.name)}</div>
+          <div class="row-sub">${esc(r.desc || '')}</div></div>
+        <button class="btn" data-restaurar="${esc(r.id)}">Restaurar</button>
+      </div>`).join('')
+    : '';
+
+  $('lista-recetas').innerHTML =
+    (filas || `<div class="vacio"><strong>Nada con ese nombre</strong></div>`) + bloqueOcultas;
+}
+
+function renderSlots() {
+  const pinta = (tipo) => (slots[tipo] || []).map((slot, i) => `
+    <div class="row" style="padding:8px 0">
+      <div class="row-main"><div class="row-name">${esc(slot.map(id => names.get(id) || id).join(' o '))}</div></div>
+      <button class="btn btn-ghost" type="button" data-alt="${tipo}:${i}">o…</button>
+      <button class="btn btn-danger" type="button" data-quitar-slot="${tipo}:${i}">×</button>
+    </div>`).join('');
+  const need = pinta('need'), opt = pinta('opt');
+  $('r-slots').innerHTML =
+    (need ? `<div class="cat-name" style="margin:10px 0 2px">Necesarios</div>${need}` : '') +
+    (opt ? `<div class="cat-name" style="margin:14px 0 2px">Opcionales</div>${opt}` : '');
+}
+
+function renderTodo() {
+  recalcular();
+  renderGrilla();
+  renderCustom();
+  renderSugerencias();
+  renderRecetas();
+  renderSlots();
+  $('lista-ingredientes').innerHTML = data.ingredients
+    .map(i => `<option value="${esc(i.name)}${i.brand ? ` (${esc(i.brand)})` : ''}">`).join('');
+}
+
+/* ── Interacción ────────────────────────────────────── */
+function toggleIng(id) {
+  pantry.has(id) ? pantry.delete(id) : pantry.add(id);
+  recalcular();
+  renderGrilla();
+  renderSugerencias();
+  renderRecetas();
+  marcarSucio();
+}
+
+$('grilla').addEventListener('click', e => {
+  const b = e.target.closest('button[data-ing]');
+  if (b) toggleIng(b.dataset.ing);
+});
+
+$('sugerencias').addEventListener('click', e => {
+  const b = e.target.closest('button[data-tengo]');
+  if (!b) return;
+  pantry.add(b.dataset.tengo);
+  toast(`${names.get(b.dataset.tengo)} sumado a la casa`);
+  renderTodo();
+  marcarSucio();
+});
+
+$('buscar-ing').addEventListener('input', e => { filtroIng = e.target.value; renderGrilla(); });
+$('buscar-rec').addEventListener('input', e => { filtroRec = e.target.value; renderRecetas(); });
+
+$('btn-basicos').addEventListener('click', () => {
+  pantry = new Set(data.ingredients.filter(i => i.staple).map(i => i.id));
+  renderTodo(); marcarSucio(); toast('Quedaron sólo los básicos');
+});
+
+$('btn-vaciar').addEventListener('click', () => {
+  if (!confirm('¿Vaciar la despensa entera? La carta va a quedar casi vacía.')) return;
+  pantry = new Set();
+  renderTodo(); marcarSucio(); toast('Despensa vacía');
+});
+
+$('form-ing').addEventListener('submit', e => {
+  e.preventDefault();
+  const nombre = $('ing-nombre').value.trim();
+  if (!nombre) return;
+  const id = norm(nombre).replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 48);
+  if (!id) return toast('Ese nombre no sirve como ingrediente', true);
+  if (data.ingredients.some(i => i.id === id)) return toast('Ese ingrediente ya está en la lista', true);
+  const nuevo = { id, name: nombre, cat: $('ing-cat').value, custom: true };
+  patch.customIngredients.push(nuevo);
+  data.ingredients.push(nuevo);
+  pantry.add(id);
+  $('ing-nombre').value = '';
+  renderTodo(); marcarSucio(); toast(`${nombre} agregado`);
+});
+
+$('lista-custom').addEventListener('click', e => {
+  const b = e.target.closest('button[data-borrar-ing]');
+  if (!b) return;
+  const id = b.dataset.borrarIng;
+  patch.customIngredients = patch.customIngredients.filter(i => i.id !== id);
+  data.ingredients = data.ingredients.filter(i => i.id !== id);
+  pantry.delete(id);
+  renderTodo(); marcarSucio();
+});
+
+/* Recetas: alta, edición y bajas */
+function idDesdeTexto(texto) {
+  const q = norm(texto.replace(/\s*\(.*\)\s*$/, '').trim());
+  if (!q) return null;
+  const exacto = data.ingredients.find(i => norm(i.name) === q);
+  return (exacto || data.ingredients.find(i => norm(i.name).includes(q)))?.id || null;
+}
+
+function agregarSlot(tipo) {
+  const id = idDesdeTexto($('r-picker').value);
+  if (!id) return toast('No encontré ese ingrediente', true);
+  slots[tipo].push([id]);
+  $('r-picker').value = '';
+  $('r-picker').focus();
+  renderSlots();
+}
+
+$('r-add-need').addEventListener('click', () => agregarSlot('need'));
+$('r-add-opt').addEventListener('click', () => agregarSlot('opt'));
+$('r-picker').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); agregarSlot('need'); }
+});
+
+$('r-slots').addEventListener('click', e => {
+  const alt = e.target.closest('button[data-alt]');
+  const quitar = e.target.closest('button[data-quitar-slot]');
+  if (alt) {
+    const [tipo, i] = alt.dataset.alt.split(':');
+    const id = idDesdeTexto($('r-picker').value);
+    if (!id) return toast('Escribí primero la alternativa en el buscador', true);
+    slots[tipo][i].push(id);
+    $('r-picker').value = '';
+    renderSlots();
+  }
+  if (quitar) {
+    const [tipo, i] = quitar.dataset.quitarSlot.split(':');
+    slots[tipo].splice(Number(i), 1);
+    renderSlots();
+  }
+});
+
+$('form-receta').addEventListener('submit', async e => {
+  e.preventDefault();
+  const nombre = $('r-nombre').value.trim();
+  if (!nombre) return;
+  if (!slots.need.length) return toast('Una receta necesita al menos un ingrediente', true);
+
+  const id = editando || norm(nombre).replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 48);
+  const receta = {
+    id, name: nombre,
+    section: $('r-seccion').value,
+    tags: $('r-tag').value ? [$('r-tag').value] : [],
+    desc: $('r-desc').value.trim(),
+    need: slots.need.map(s => s.length === 1 ? s[0] : s),
+    opt: slots.opt.map(s => s.length === 1 ? s[0] : s),
+    custom: true,
+  };
+
+  patch.customRecipes = [...patch.customRecipes.filter(r => r.id !== id), receta];
+  patch.hidden = (patch.hidden || []).filter(h => h !== id);
+  data.recipes = [...data.recipes.filter(r => r.id !== id), receta];
+
+  resetForm();
+  renderTodo();
+  marcarSucio();
+  toast(`${nombre} guardada`);
+});
+
+function resetForm() {
+  editando = null;
+  $('form-receta').reset();
+  slots = { need: [], opt: [] };
+  $('r-guardar').textContent = 'Guardar receta';
+  $('r-cancelar').hidden = true;
+  renderSlots();
+}
+$('r-cancelar').addEventListener('click', resetForm);
+
+$('lista-recetas').addEventListener('click', async e => {
+  const editar = e.target.closest('button[data-editar]');
+  const ocultar = e.target.closest('button[data-ocultar]');
+  const restaurar = e.target.closest('button[data-restaurar]');
+
+  if (editar) {
+    const r = data.recipes.find(x => x.id === editar.dataset.editar);
+    if (!r) return;
+    editando = r.id;
+    $('r-nombre').value = r.name;
+    $('r-seccion').value = r.section;
+    $('r-tag').value = (r.tags || [])[0] || '';
+    $('r-desc').value = r.desc || '';
+    slots = {
+      need: (r.need || []).map(x => isGroup(x) ? [...x] : [x]),
+      opt: (r.opt || []).map(x => isGroup(x) ? [...x] : [x]),
+    };
+    $('r-guardar').textContent = 'Guardar cambios';
+    $('r-cancelar').hidden = false;
+    renderSlots();
+    $('r-nombre').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  if (ocultar) {
+    const id = ocultar.dataset.ocultar;
+    if (!confirm('¿Sacar esta receta de la carta?')) return;
+    // Marcamos las dos cosas: si el id no es de una receta base, el servidor lo descarta.
+    patch.customRecipes = patch.customRecipes.filter(r => r.id !== id);
+    patch.hidden = [...new Set([...(patch.hidden || []), id])];
+    if (editando === id) resetForm();
+    await guardar();
+    await recargar();
+  }
+
+  if (restaurar) {
+    const id = restaurar.dataset.restaurar;
+    patch.hidden = (patch.hidden || []).filter(h => h !== id);
+    await guardar();
+    await recargar();
+  }
+});
+
+$('tabs').addEventListener('click', e => {
+  const b = e.target.closest('button[data-tab]');
+  if (!b) return;
+  for (const btn of $('tabs').children) btn.classList.toggle('active', btn === b);
+  for (const t of ['despensa', 'compras', 'recetas']) $(`tab-${t}`).hidden = t !== b.dataset.tab;
+});
+
+$('salir').addEventListener('click', async e => {
+  e.preventDefault();
+  await guardar();
+  await session('DELETE').catch(() => {});
+  location.reload();
+});
+
+/* ── Arranque ───────────────────────────────────────── */
+$('form-login').addEventListener('submit', async e => {
+  e.preventDefault();
+  $('login-error').hidden = true;
+  try {
+    meta = await session('POST', { password: $('password').value });
+    $('password').value = '';
+    $('pantalla-login').hidden = true;
+    await abrirPanel();
+  } catch (err) {
+    $('login-error').textContent = err.message;
+    $('login-error').hidden = false;
+  }
+});
+
+/** Relee el estado real y reconstruye el patch que el panel va a seguir editando. */
+async function recargar() {
+  data = await fetchState();
+
+  const guardado = meta.shared ? null : readLocal();
+  patch = {
+    pantry: [...data.pantry],
+    customIngredients: meta.shared ? data.ingredients.filter(i => i.custom) : (guardado?.customIngredients || []),
+    customRecipes: meta.shared ? data.recipes.filter(r => r.custom) : (guardado?.customRecipes || []),
+    hidden: (data.hiddenRecipes || []).map(r => r.id),
+  };
+  pantry = new Set(data.pantry);
+  renderTodo();
+  listo = true;
+  $('estado-guardado').textContent = meta.shared ? 'al día' : 'guardado en este dispositivo';
+}
+
+async function abrirPanel() {
+  $('pantalla-panel').hidden = false;
+  await recargar();
+
+  $('ing-cat').innerHTML = data.categories.map(c => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('');
+  $('r-seccion').innerHTML = data.sections.map(s => `<option value="${esc(s.id)}">${esc(s.name)}</option>`).join('');
+  $('r-tag').innerHTML = `<option value="">sin etiqueta</option>`
+    + (data.tags || []).map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join('');
+
+  if (!meta.shared) {
+    $('banner-modo').innerHTML = `<div class="banner"><strong>Modo local.</strong>
+      Todavía no hay base de datos conectada, así que los cambios se guardan sólo en este dispositivo
+      y las visitas no los ven. Conectá Supabase para que la carta sea la misma para todos.</div>`;
+  }
+}
+
+async function arrancar() {
+  meta = await session('GET');
+  if (meta.authConfigured && !meta.admin) {
+    $('pantalla-login').hidden = false;
+    return;
+  }
+  await abrirPanel();
+}
+
+arrancar().catch(err => {
+  console.error(err);
+  document.body.innerHTML = `<div class="wrap"><div class="vacio"><strong>No pude abrir la cocina</strong>${esc(err.message)}</div></div>`;
+});
+</script>
+</body>
+</html>

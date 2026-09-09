@@ -1,0 +1,14 @@
+{
+  "name": "danshouse",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "La carta de Dan's House: muestra sólo lo que se puede cocinar con lo que hay en casa.",
+  "scripts": {
+    "validar": "node scripts/validate.mjs",
+    "dev": "node scripts/dev-server.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
