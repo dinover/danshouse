@@ -46,39 +46,31 @@ Settings → Environment Variables:
 | `ADMIN_PASSWORD` | la que elijas | Entrar a `/admin`. **Sin esto el panel remoto no funciona.** |
 | `ADMIN_SECRET` | cualquier cadena larga al azar | Opcional. Firma la sesión; si no está, se deriva de la contraseña. Definirla permite cambiar la contraseña sin cerrar la sesión. |
 
-**4 · La base de datos (Supabase)**
+**4 · La base de datos**
 
-Primero, en Supabase → tu proyecto → **SQL Editor** → pegar y correr esto:
+En Vercel, dentro del proyecto → pestaña **Storage** → **Create Database** →
+elegir **Upstash** (*Serverless DB · Redis*). Es una base chiquita que Vercel
+ofrece en su propio menú; el plan gratis alcanza de sobra para esto.
 
-```sql
-create table if not exists danshouse_state (
-  id         text primary key,
-  data       jsonb not null,
-  updated_at timestamptz not null default now()
-);
+Al crearla te pregunta:
 
--- Nadie entra con la clave pública: sólo el servidor, con la clave de servicio.
-alter table danshouse_state enable row level security;
-```
+- **Región**: la más cercana, para que responda rápido.
+- **Plan**: *Free*.
+- **Conectar al proyecto**: marcá `danshouse`, en los tres entornos
+  (Production, Preview, Development).
 
-Esa única tabla guarda todo: qué hay en casa, los ingredientes y recetas que
-agregues, y los contadores del freno de login.
+Con eso Vercel carga las variables solo. Para confirmar, mirá en
+Settings → Environment Variables que estén estas dos:
 
-Después, en Vercel → Settings → Environment Variables:
-
-| Variable | Dónde sale |
+| Variable | Qué es |
 |---|---|
-| `SUPABASE_URL` | Supabase → Project Settings → API → *Project URL* |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Project Settings → API → *service_role* |
-| `SUPABASE_TABLE` | Opcional, sólo si le pusiste otro nombre a la tabla |
+| `KV_REST_API_URL` | la dirección de la base |
+| `KV_REST_API_TOKEN` | la clave de acceso |
 
-Si conectás Supabase desde Vercel (Storage → Supabase), esas dos variables se
-cargan solas.
-
-> La clave `service_role` salta las reglas de acceso de la tabla, así que va
-> **únicamente** en las variables de entorno de Vercel. Se usa dentro de las
-> funciones de `api/` y nunca se manda al navegador. No la pegues en el código
-> ni la compartas.
+Si la integración las nombró distinto, el código también acepta
+`UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN`. Lo que **no** sirve es
+`KV_URL` ni `REDIS_URL` a secas: esas son para conectarse por protocolo Redis,
+y las funciones hablan por HTTP.
 
 Sin este paso el sitio igual funciona, pero en **modo local**: los cambios del panel quedan
 guardados sólo en el navegador de quien los hizo y las visitas no los ven. El panel lo avisa
@@ -100,10 +92,10 @@ Después de agregar variables hay que **volver a desplegar** para que tomen efec
 
 ```bash
 npm run validar                          # revisa que las recetas no citen ingredientes inexistentes
-node scripts/fake-supabase.mjs &         # Supabase de mentira, en memoria (puerto 3001)
+node scripts/fake-redis.mjs &            # base de mentira, en memoria (puerto 3001)
 ADMIN_PASSWORD=loquesea \
-SUPABASE_URL=http://localhost:3001 \
-SUPABASE_SERVICE_ROLE_KEY=cualquiera \
+KV_REST_API_URL=http://localhost:3001 \
+KV_REST_API_TOKEN=cualquiera \
   npm run dev                            # http://localhost:3000
 ```
 
@@ -125,7 +117,7 @@ api/
     ingredients.js      catálogo de ingredientes
     recipes.js          recetario
     state.js            mezcla la base del repo con lo cargado desde el panel
-    store.js            Supabase
+    store.js            la base (Redis REST)
     auth.js             contraseña, cookie firmada, freno de intentos
 scripts/                validación y servidor de desarrollo
 ```

@@ -1,82 +1,67 @@
-// Almacenamiento compartido sobre Supabase (API REST de PostgREST).
-// Una sola tabla clave-valor guarda tanto el estado de la casa como los
-// contadores de intentos de login.
+// Almacenamiento compartido sobre Redis REST (Upstash, el que Vercel ofrece
+// en la pestaña Storage). Guarda el estado de la casa y los contadores del
+// freno de login.
 //
-// Si no hay credenciales, el sitio sigue funcionando en modo local:
-// la carta muestra el estado semilla y el panel guarda en el navegador.
+// Sin credenciales el sitio no se rompe: sigue en modo local, mostrando el
+// estado semilla, y el panel guarda en el navegador avisando con un cartel.
 
-const URL_ = (process.env.SUPABASE_URL || '').replace(/\/+$/, '');
+const URL_ =
+  process.env.KV_REST_API_URL ||
+  process.env.UPSTASH_REDIS_REST_URL ||
+  process.env.REDIS_REST_URL || '';
 
-// La clave de servicio se usa sólo acá, en el servidor: nunca llega al navegador.
-const KEY =
-  process.env.SUPABASE_SERVICE_ROLE_KEY ||
-  process.env.SUPABASE_KEY ||
-  process.env.SUPABASE_ANON_KEY || '';
+const TOKEN =
+  process.env.KV_REST_API_TOKEN ||
+  process.env.UPSTASH_REDIS_REST_TOKEN ||
+  process.env.REDIS_REST_TOKEN || '';
 
-const TABLA = process.env.SUPABASE_TABLE || 'danshouse_state';
+export const dbEnabled = Boolean(URL_ && TOKEN);
 
-export const dbEnabled = Boolean(URL_ && KEY);
+async function comando(...args) {
+  const res = await fetch(URL_, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(args),
+  });
 
-const cabeceras = extra => ({
-  apikey: KEY,
-  Authorization: `Bearer ${KEY}`,
-  'Content-Type': 'application/json',
-  ...extra,
-});
-
-function explicar(status, cuerpo) {
-  if (status === 404 || /relation .* does not exist|PGRST205/i.test(cuerpo)) {
-    return new Error(`Falta la tabla "${TABLA}" en Supabase. Creala con el SQL del README.`);
+  if (!res.ok) {
+    const cuerpo = (await res.text()).slice(0, 200);
+    if (res.status === 401 || res.status === 403) {
+      throw new Error('La base rechazó el token. Revisá KV_REST_API_TOKEN en Vercel.');
+    }
+    if (res.status === 404) {
+      throw new Error('No encontré la base en esa dirección. Revisá KV_REST_API_URL en Vercel.');
+    }
+    throw new Error(`La base respondió ${res.status} a ${args[0]}: ${cuerpo}`);
   }
-  if (status === 401 || status === 403) {
-    return new Error('Supabase rechazó la clave. Revisá SUPABASE_SERVICE_ROLE_KEY.');
-  }
-  return new Error(`Supabase respondió ${status}: ${cuerpo.slice(0, 200)}`);
+
+  return (await res.json()).result;
 }
 
 export async function dbGetJSON(key) {
   if (!dbEnabled) return null;
-  const url = `${URL_}/rest/v1/${TABLA}?id=eq.${encodeURIComponent(key)}&select=data`;
-  const res = await fetch(url, { headers: cabeceras() });
-  if (!res.ok) throw explicar(res.status, await res.text());
-  const filas = await res.json();
-  return filas?.[0]?.data ?? null;
+  const crudo = await comando('GET', key);
+  if (crudo == null) return null;
+  try { return typeof crudo === 'string' ? JSON.parse(crudo) : crudo; }
+  catch { return null; }
 }
 
 export async function dbSetJSON(key, value) {
   if (!dbEnabled) return false;
-  const res = await fetch(`${URL_}/rest/v1/${TABLA}`, {
-    method: 'POST',
-    headers: cabeceras({ Prefer: 'resolution=merge-duplicates,return=minimal' }),
-    body: JSON.stringify({ id: key, data: value, updated_at: new Date().toISOString() }),
-  });
-  if (!res.ok) throw explicar(res.status, await res.text());
+  await comando('SET', key, JSON.stringify(value));
   return true;
 }
 
-/**
- * Contador con ventana de tiempo, para frenar intentos de login.
- * Lee y reescribe en dos pasos: dos intentos simultáneos podrían contar como
- * uno, y para un freno de fuerza bruta eso alcanza de sobra.
- */
+/** Contador que se borra solo, para frenar intentos de login. */
 export async function dbBump(key, segundosVentana) {
   if (!dbEnabled) return 0;
-  const ahora = Date.now();
-  let previo = null;
-  try { previo = await dbGetJSON(key); } catch { return 0; }
-
-  const vigente = previo && typeof previo.hasta === 'number' && previo.hasta > ahora;
-  const cuenta = vigente ? (Number(previo.cuenta) || 0) + 1 : 1;
-  const hasta = vigente ? previo.hasta : ahora + segundosVentana * 1000;
-
-  try { await dbSetJSON(key, { cuenta, hasta }); } catch { /* contar es best-effort */ }
-  return cuenta;
+  const n = Number(await comando('INCR', key)) || 0;
+  if (n === 1) await comando('EXPIRE', key, String(segundosVentana));
+  return n;
 }
 
 export async function dbDel(key) {
   if (!dbEnabled) return false;
-  const url = `${URL_}/rest/v1/${TABLA}?id=eq.${encodeURIComponent(key)}`;
-  const res = await fetch(url, { method: 'DELETE', headers: cabeceras() });
-  if (!res.ok) throw explicar(res.status, await res.text());
+  await comando('DEL', key);
   return true;
 }

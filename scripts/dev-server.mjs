@@ -1,5 +1,5 @@
 // Servidor de prueba: imita el ruteo de Vercel (estáticos + /api/*) sin depender de la nube.
-// Para el camino compartido, levantar antes scripts/fake-supabase.mjs.
+// Para el camino compartido, levantar antes scripts/fake-redis.mjs.
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
