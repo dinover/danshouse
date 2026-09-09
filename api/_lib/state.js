@@ -1,6 +1,6 @@
 import { INGREDIENTS, CATEGORIES } from './ingredients.js';
 import { RECIPES, SECTIONS } from './recipes.js';
-import { kvGetJSON, kvSetJSON } from './store.js';
+import { dbGetJSON, dbSetJSON } from './store.js';
 
 const KEY = 'danshouse:state:v1';
 const TAGS = ['picante', 'clasico', 'veggie', 'estrella', 'rapido', 'casa', 'suave'];
@@ -14,12 +14,14 @@ export const EMPTY_STATE = {
 };
 
 export async function loadState() {
-  const stored = await kvGetJSON(KEY);
+  const stored = await dbGetJSON(KEY);
   return { ...EMPTY_STATE, ...(stored || {}) };
 }
 
 export async function saveState(state) {
-  return kvSetJSON(KEY, { ...state, updatedAt: new Date().toISOString() });
+  const sellado = { ...state, updatedAt: new Date().toISOString() };
+  await dbSetJSON(KEY, sellado);
+  return sellado;
 }
 
 const slug = text => String(text).normalize('NFD').replace(/[\u0300-\u036f]/g, '')

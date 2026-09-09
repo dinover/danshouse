@@ -540,8 +540,8 @@ async function abrirPanel() {
 
   if (!meta.shared) {
     $('banner-modo').innerHTML = `<div class="banner"><strong>Modo local.</strong>
-      Todavía no hay almacenamiento compartido, así que los cambios se guardan sólo en este dispositivo
-      y las visitas no los ven. Conectá Upstash Redis en Vercel para que la carta sea la misma para todos.</div>`;
+      Todavía no hay base de datos conectada, así que los cambios se guardan sólo en este dispositivo
+      y las visitas no los ven. Conectá Supabase para que la carta sea la misma para todos.</div>`;
   }
 }
 

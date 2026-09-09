@@ -1,5 +1,5 @@
 import { loadState, saveState, compose, applyPatch } from './_lib/state.js';
-import { kvEnabled } from './_lib/store.js';
+import { dbEnabled } from './_lib/store.js';
 import { isAdmin, authConfigured } from './_lib/auth.js';
 
 async function readBody(req) {
@@ -18,7 +18,7 @@ export default async function handler(req, res) {
     res.setHeader('Cache-Control', 'no-store');
     return res.status(200).json({
       ...compose(state),
-      meta: { shared: kvEnabled, authConfigured, admin, hidden: state.hidden || [], updatedAt: state.updatedAt },
+      meta: { shared: dbEnabled, authConfigured, admin, hidden: state.hidden || [], updatedAt: state.updatedAt },
     });
   }
 
@@ -27,19 +27,18 @@ export default async function handler(req, res) {
       return res.status(503).json({ error: 'El panel remoto no está configurado. Falta la variable ADMIN_PASSWORD.' });
     }
     if (!admin) return res.status(401).json({ error: 'Necesitás iniciar sesión.' });
-    if (!kvEnabled) {
-      return res.status(503).json({ error: 'No hay almacenamiento compartido. Conectá Upstash Redis en Vercel.' });
+    if (!dbEnabled) {
+      return res.status(503).json({ error: 'No hay base de datos conectada. Configurá Supabase (ver README).' });
     }
 
     const patch = await readBody(req);
     if (!patch) return res.status(400).json({ error: 'Cuerpo inválido.' });
 
-    const next = applyPatch(await loadState(), patch);
-    await saveState(next);
+    const guardado = await saveState(applyPatch(await loadState(), patch));
     res.setHeader('Cache-Control', 'no-store');
     return res.status(200).json({
-      ...compose(next),
-      meta: { shared: true, authConfigured, admin: true, hidden: next.hidden || [], updatedAt: next.updatedAt },
+      ...compose(guardado),
+      meta: { shared: true, authConfigured, admin: true, hidden: guardado.hidden || [], updatedAt: guardado.updatedAt },
     });
   }
 

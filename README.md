@@ -46,11 +46,39 @@ Settings → Environment Variables:
 | `ADMIN_PASSWORD` | la que elijas | Entrar a `/admin`. **Sin esto el panel remoto no funciona.** |
 | `ADMIN_SECRET` | cualquier cadena larga al azar | Opcional. Firma la sesión; si no está, se deriva de la contraseña. Definirla permite cambiar la contraseña sin cerrar la sesión. |
 
-**4 · El almacenamiento compartido**
+**4 · La base de datos (Supabase)**
 
-Storage → *Upstash Redis* (plan gratis alcanza de sobra) → conectarlo al proyecto. Vercel
-inyecta `KV_REST_API_URL` y `KV_REST_API_TOKEN`; el código también acepta los nombres
-`UPSTASH_REDIS_REST_*` o `REDIS_REST_*`.
+Primero, en Supabase → tu proyecto → **SQL Editor** → pegar y correr esto:
+
+```sql
+create table if not exists danshouse_state (
+  id         text primary key,
+  data       jsonb not null,
+  updated_at timestamptz not null default now()
+);
+
+-- Nadie entra con la clave pública: sólo el servidor, con la clave de servicio.
+alter table danshouse_state enable row level security;
+```
+
+Esa única tabla guarda todo: qué hay en casa, los ingredientes y recetas que
+agregues, y los contadores del freno de login.
+
+Después, en Vercel → Settings → Environment Variables:
+
+| Variable | Dónde sale |
+|---|---|
+| `SUPABASE_URL` | Supabase → Project Settings → API → *Project URL* |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Project Settings → API → *service_role* |
+| `SUPABASE_TABLE` | Opcional, sólo si le pusiste otro nombre a la tabla |
+
+Si conectás Supabase desde Vercel (Storage → Supabase), esas dos variables se
+cargan solas.
+
+> La clave `service_role` salta las reglas de acceso de la tabla, así que va
+> **únicamente** en las variables de entorno de Vercel. Se usa dentro de las
+> funciones de `api/` y nunca se manda al navegador. No la pegues en el código
+> ni la compartas.
 
 Sin este paso el sitio igual funciona, pero en **modo local**: los cambios del panel quedan
 guardados sólo en el navegador de quien los hizo y las visitas no los ven. El panel lo avisa
@@ -71,12 +99,12 @@ Después de agregar variables hay que **volver a desplegar** para que tomen efec
 ## Desarrollo local
 
 ```bash
-npm run validar                        # revisa que las recetas no citen ingredientes inexistentes
-node scripts/fake-kv.mjs &             # Redis REST de mentira, en memoria (puerto 3001)
+npm run validar                          # revisa que las recetas no citen ingredientes inexistentes
+node scripts/fake-supabase.mjs &         # Supabase de mentira, en memoria (puerto 3001)
 ADMIN_PASSWORD=loquesea \
-KV_REST_API_URL=http://localhost:3001 \
-KV_REST_API_TOKEN=x \
-  npm run dev                          # http://localhost:3000
+SUPABASE_URL=http://localhost:3001 \
+SUPABASE_SERVICE_ROLE_KEY=cualquiera \
+  npm run dev                            # http://localhost:3000
 ```
 
 Sin las variables de entorno el servidor local arranca igual, en modo local.
@@ -97,7 +125,7 @@ api/
     ingredients.js      catálogo de ingredientes
     recipes.js          recetario
     state.js            mezcla la base del repo con lo cargado desde el panel
-    store.js            Redis REST
+    store.js            Supabase
     auth.js             contraseña, cookie firmada, freno de intentos
 scripts/                validación y servidor de desarrollo
 ```

@@ -1,5 +1,5 @@
 import { checkPassword, makeToken, sessionCookie, isAdmin, authConfigured, clientKey } from './_lib/auth.js';
-import { kvBump, kvEnabled } from './_lib/store.js';
+import { dbBump, dbEnabled } from './_lib/store.js';
 
 const MAX_INTENTOS = 8;
 const VENTANA = 60 * 15; // 15 minutos
@@ -15,7 +15,7 @@ export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
 
   if (req.method === 'GET') {
-    return res.status(200).json({ admin: isAdmin(req), authConfigured, shared: kvEnabled });
+    return res.status(200).json({ admin: isAdmin(req), authConfigured, shared: dbEnabled });
   }
 
   if (req.method === 'POST') {
@@ -23,7 +23,7 @@ export default async function handler(req, res) {
       return res.status(503).json({ error: 'Falta configurar ADMIN_PASSWORD en Vercel.' });
     }
 
-    const intentos = await kvBump(`danshouse:login:${clientKey(req)}`, VENTANA);
+    const intentos = await dbBump(`danshouse:login:${clientKey(req)}`, VENTANA);
     if (intentos > MAX_INTENTOS) {
       return res.status(429).json({ error: 'Demasiados intentos. Probá de nuevo en un rato.' });
     }
@@ -37,12 +37,12 @@ export default async function handler(req, res) {
     }
 
     res.setHeader('Set-Cookie', sessionCookie(makeToken()));
-    return res.status(200).json({ admin: true, authConfigured, shared: kvEnabled });
+    return res.status(200).json({ admin: true, authConfigured, shared: dbEnabled });
   }
 
   if (req.method === 'DELETE') {
     res.setHeader('Set-Cookie', sessionCookie(null));
-    return res.status(200).json({ admin: false, authConfigured, shared: kvEnabled });
+    return res.status(200).json({ admin: false, authConfigured, shared: dbEnabled });
   }
 
   res.setHeader('Allow', 'GET, POST, DELETE');
