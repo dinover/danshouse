@@ -4,7 +4,11 @@ La carta de la casa. Sólo lista lo que **realmente se puede hacer** con los ing
 que hay ahora mismo: si aparece en el menú, hay con qué prepararlo.
 
 - **`/`** — la carta, para las visitas. Sin login.
-- **`/admin`** — la cocina: marcar qué hay en casa, ver qué conviene comprar y cargar recetas. Con contraseña.
+- **`/admin`** — la cocina: marcar qué hay en casa, armar la lista de compras, ver qué conviene comprar y cargar recetas. Con contraseña.
+
+En Compras podés generar una **lista de compras**: parte de todo lo que falta en
+casa, sacás lo que no vas a comprar y sale como texto plano agrupado por
+categoría, listo para copiar o mandar por WhatsApp.
 
 ## Cómo decide qué mostrar
 
@@ -92,11 +96,10 @@ Después de agregar variables hay que **volver a desplegar** para que tomen efec
 
 ```bash
 npm run validar                          # revisa que las recetas no citen ingredientes inexistentes
-node scripts/fake-redis.mjs &            # base de mentira, en memoria (puerto 3001)
 ADMIN_PASSWORD=loquesea \
 KV_REST_API_URL=http://localhost:3001 \
 KV_REST_API_TOKEN=cualquiera \
-  npm run dev                            # http://localhost:3000
+  npm run dev                            # sitio + base de mentira en http://localhost:3000
 ```
 
 Sin las variables de entorno el servidor local arranca igual, en modo local.

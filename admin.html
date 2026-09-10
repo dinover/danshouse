@@ -77,6 +77,42 @@
   <!-- COMPRAS -->
   <section id="tab-compras" hidden>
     <div class="card">
+      <div class="card-title">Lista de compras</div>
+      <p class="card-sub">Todo lo que no hay en casa. Sacá lo que no vayas a comprar y copiala.</p>
+      <div class="btn-row" style="margin-top:14px">
+        <button class="btn btn-solid" type="button" id="abrir-lista">Crear lista de compras</button>
+      </div>
+    </div>
+
+    <div id="constructor" hidden>
+      <div class="card">
+        <div class="btn-row" style="margin-bottom:12px">
+          <button class="btn btn-ghost" type="button" data-marcar="todo">Marcar todo</button>
+          <button class="btn btn-ghost" type="button" data-marcar="nada">Desmarcar todo</button>
+          <button class="btn btn-ghost" type="button" data-marcar="utiles">Sólo los que destraban platos</button>
+        </div>
+        <input class="search" id="buscar-lista" type="text" placeholder="Buscar ingrediente…" autocomplete="off">
+      </div>
+
+      <div id="grilla-lista"></div>
+
+      <div class="card">
+        <div class="cat-head">
+          <span class="cat-name">La lista</span>
+          <span class="cat-count" id="cuenta-lista"></span>
+        </div>
+        <textarea id="texto-lista" rows="10" readonly
+          aria-label="Lista de compras en texto"
+          style="font-size:11.5px; line-height:1.8"></textarea>
+        <div class="btn-row" style="margin-top:12px">
+          <button class="btn btn-solid" type="button" id="copiar-lista">Copiar</button>
+          <a class="btn" id="wsp-lista" target="_blank" rel="noopener">Mandar por WhatsApp</a>
+          <button class="btn btn-ghost" type="button" id="cerrar-lista" style="margin-left:auto">Cerrar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:1.4rem">
       <div class="card-title">Qué conviene comprar</div>
       <p class="card-sub">Cada cosa de esta lista destraba platos nuevos apenas entra a la casa. Tocá “tengo” cuando la traigas.</p>
     </div>
@@ -135,7 +171,8 @@ const norm = s => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toL
 let data = null, menu = null, names = null, meta = null;
 let patch = { pantry: [], customIngredients: [], customRecipes: [], hidden: [] };
 let pantry = new Set();
-let filtroIng = '', filtroRec = '', editando = null;
+let filtroIng = '', filtroRec = '', filtroLista = '', editando = null;
+let elegidos = null;   // null = todavía no abrió la lista
 let slots = { need: [], opt: [] };
 
 function toast(msg, malo = false) {
@@ -289,6 +326,67 @@ function renderSlots() {
     (opt ? `<div class="cat-name" style="margin:14px 0 2px">Opcionales</div>${opt}` : '');
 }
 
+/* ── Lista de compras ────────────────────────────────── */
+
+/** Todo lo que no hay en casa, en el orden del catálogo. */
+function faltantes() {
+  return data.ingredients.filter(i => !pantry.has(i.id));
+}
+
+/** Los que destraban al menos una receta si entran a la casa. */
+function utiles() {
+  return new Set(shoppingSuggestions(data, { limit: 999 }).map(s => s.id));
+}
+
+function renderLista() {
+  if (elegidos === null) return;
+
+  const faltan = faltantes();
+  // Si algo se compró mientras la lista estaba abierta, sale solo.
+  const ids = new Set(faltan.map(i => i.id));
+  for (const id of [...elegidos]) if (!ids.has(id)) elegidos.delete(id);
+
+  const q = norm(filtroLista.trim());
+  let html = '';
+  for (const cat of data.categories) {
+    const items = faltan.filter(i => i.cat === cat.id && (!q || norm(`${i.name} ${i.brand || ''}`).includes(q)));
+    if (!items.length) continue;
+    html += `<div class="cat-block">
+      <div class="cat-head">
+        <span class="cat-name">${esc(cat.name)}</span>
+        <span class="cat-count">${items.filter(i => elegidos.has(i.id)).length}/${items.length}</span>
+      </div>
+      <div class="ing-grid">${items.map(i => `
+        <button type="button" class="ing${elegidos.has(i.id) ? ' on' : ''}" data-lista="${esc(i.id)}">
+          <span class="box"></span>
+          <span class="txt">${esc(i.name)}${i.brand ? ` <span class="brand">${esc(i.brand)}</span>` : ''}</span>
+        </button>`).join('')}</div>
+    </div>`;
+  }
+  $('grilla-lista').innerHTML = html || `<div class="vacio"><strong>No falta nada</strong>Tenés todo el catálogo en casa.</div>`;
+
+  const texto = textoLista();
+  $('texto-lista').value = texto;
+  $('cuenta-lista').textContent = elegidos.size === 1 ? '1 ingrediente' : `${elegidos.size} ingredientes`;
+
+  const wsp = $('wsp-lista');
+  wsp.href = `https://wa.me/?text=${encodeURIComponent(texto)}`;
+  wsp.setAttribute('aria-disabled', elegidos.size ? 'false' : 'true');
+  $('copiar-lista').disabled = !elegidos.size;
+}
+
+/** Texto plano agrupado por categoría. Los asteriscos los usa WhatsApp como negrita. */
+function textoLista() {
+  if (!elegidos.size) return 'Marcá al menos un ingrediente.';
+  const lineas = ['*Lista de compras · Dan\'s House*'];
+  for (const cat of data.categories) {
+    const items = data.ingredients.filter(i => i.cat === cat.id && elegidos.has(i.id));
+    if (!items.length) continue;
+    lineas.push('', `*${cat.name}*`, ...items.map(i => `- ${i.name}${i.brand ? ` (${i.brand})` : ''}`));
+  }
+  return lineas.join('\n');
+}
+
 function renderTodo() {
   recalcular();
   renderGrilla();
@@ -296,6 +394,7 @@ function renderTodo() {
   renderSugerencias();
   renderRecetas();
   renderSlots();
+  renderLista();
   $('lista-ingredientes').innerHTML = data.ingredients
     .map(i => `<option value="${esc(i.name)}${i.brand ? ` (${esc(i.brand)})` : ''}">`).join('');
 }
@@ -307,6 +406,7 @@ function toggleIng(id) {
   renderGrilla();
   renderSugerencias();
   renderRecetas();
+  renderLista();
   marcarSucio();
 }
 
@@ -322,6 +422,59 @@ $('sugerencias').addEventListener('click', e => {
   toast(`${names.get(b.dataset.tengo)} sumado a la casa`);
   renderTodo();
   marcarSucio();
+});
+
+$('abrir-lista').addEventListener('click', () => {
+  // Arranca con todo marcado: es más rápido sacar que agregar.
+  elegidos = new Set(faltantes().map(i => i.id));
+  $('constructor').hidden = false;
+  filtroLista = '';
+  $('buscar-lista').value = '';
+  renderLista();
+  $('constructor').scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+
+$('cerrar-lista').addEventListener('click', () => {
+  $('constructor').hidden = true;
+  elegidos = null;
+});
+
+$('grilla-lista').addEventListener('click', e => {
+  const b = e.target.closest('button[data-lista]');
+  if (!b) return;
+  const id = b.dataset.lista;
+  elegidos.has(id) ? elegidos.delete(id) : elegidos.add(id);
+  renderLista();
+});
+
+$('constructor').addEventListener('click', e => {
+  const b = e.target.closest('button[data-marcar]');
+  if (!b) return;
+  if (b.dataset.marcar === 'todo') elegidos = new Set(faltantes().map(i => i.id));
+  else if (b.dataset.marcar === 'nada') elegidos = new Set();
+  else {
+    const buenos = utiles();
+    elegidos = new Set(faltantes().filter(i => buenos.has(i.id)).map(i => i.id));
+  }
+  renderLista();
+});
+
+$('buscar-lista').addEventListener('input', e => { filtroLista = e.target.value; renderLista(); });
+
+$('copiar-lista').addEventListener('click', async () => {
+  const texto = $('texto-lista').value;
+  try {
+    await navigator.clipboard.writeText(texto);
+    toast('Lista copiada');
+  } catch {
+    // Sin permiso de portapapeles (o sin HTTPS): la seleccionamos para copiar a mano.
+    const caja = $('texto-lista');
+    caja.removeAttribute('readonly');
+    caja.select();
+    const listo = document.execCommand?.('copy');
+    caja.setAttribute('readonly', '');
+    toast(listo ? 'Lista copiada' : 'No pude copiar: está seleccionada, copiala a mano', !listo);
+  }
 });
 
 $('buscar-ing').addEventListener('input', e => { filtroIng = e.target.value; renderGrilla(); });
