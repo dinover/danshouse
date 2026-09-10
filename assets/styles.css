@@ -357,3 +357,13 @@ select option { background: var(--bg); }
   .ing-grid { grid-template-columns: 1fr 1fr; }
   nav button { padding: 13px 10px; font-size: 9px; }
 }
+
+/* Lista de compras */
+#texto-lista {
+  background: var(--bg);
+  color: var(--cream-dim);
+  white-space: pre;
+  overflow-x: auto;
+}
+.btn[aria-disabled="true"] { opacity: 0.35; pointer-events: none; }
+a.btn { text-decoration: none; display: inline-block; text-align: center; }
