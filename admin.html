@@ -538,11 +538,36 @@ async function abrirPanel() {
   $('r-tag').innerHTML = `<option value="">sin etiqueta</option>`
     + (data.tags || []).map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join('');
 
-  if (!meta.shared) {
-    $('banner-modo').innerHTML = `<div class="banner"><strong>Modo local.</strong>
-      Todavía no hay base de datos conectada, así que los cambios se guardan sólo en este dispositivo
-      y las visitas no los ven. Activá la base en Vercel para que la carta sea la misma para todos.</div>`;
+  if (!meta.shared) $('banner-modo').innerHTML = carteLocal(meta.storage);
+}
+
+/**
+ * Cartel de modo local. Si el servidor mandó el diagnóstico, decimos
+ * exactamente qué falta en vez de un consejo genérico.
+ */
+function carteLocal(diag) {
+  const base = `<strong>Modo local.</strong> Los cambios se guardan sólo en este dispositivo
+    y las visitas no los ven.`;
+
+  let causa = `Activá la base en Vercel para que la carta sea la misma para todos.`;
+
+  if (diag) {
+    if (!diag.utiles.length && !diag.inservibles.length) {
+      causa = `La función no recibió ninguna variable de la base.
+        Si ya la conectaste en Vercel, falta <strong>volver a desplegar</strong>:
+        las variables sólo entran en despliegues nuevos.`;
+    } else if (!diag.utiles.length && diag.inservibles.length) {
+      causa = `Llegaron ${diag.inservibles.map(esc).join(' y ')}, que sirven para el
+        protocolo Redis, no para HTTP. Copiá del panel de Upstash la
+        <strong>REST URL</strong> y el <strong>REST token</strong>, y cargalos en Vercel
+        como <strong>KV_REST_API_URL</strong> y <strong>KV_REST_API_TOKEN</strong>.`;
+    } else if (!diag.tieneUrl || !diag.tieneToken) {
+      causa = `Llegó ${diag.utiles.map(esc).join(', ')}, pero falta
+        ${!diag.tieneUrl ? 'la dirección (<strong>KV_REST_API_URL</strong>)' : 'el token (<strong>KV_REST_API_TOKEN</strong>)'}.`;
+    }
   }
+
+  return `<div class="banner">${base}<br><br>${causa}</div>`;
 }
 
 async function arrancar() {

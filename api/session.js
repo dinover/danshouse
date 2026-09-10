@@ -1,5 +1,5 @@
 import { checkPassword, makeToken, sessionCookie, isAdmin, authConfigured, clientKey } from './_lib/auth.js';
-import { dbBump, dbEnabled } from './_lib/store.js';
+import { dbBump, dbEnabled, diagnostico } from './_lib/store.js';
 
 const MAX_INTENTOS = 8;
 const VENTANA = 60 * 15; // 15 minutos
@@ -15,7 +15,12 @@ export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
 
   if (req.method === 'GET') {
-    return res.status(200).json({ admin: isAdmin(req), authConfigured, shared: dbEnabled });
+    const admin = isAdmin(req);
+    return res.status(200).json({
+      admin, authConfigured, shared: dbEnabled,
+      // Sólo para quien ya entró: nombres de variables, nunca valores.
+      ...(admin && !dbEnabled ? { storage: diagnostico() } : {}),
+    });
   }
 
   if (req.method === 'POST') {
@@ -37,7 +42,11 @@ export default async function handler(req, res) {
     }
 
     res.setHeader('Set-Cookie', sessionCookie(makeToken()));
-    return res.status(200).json({ admin: true, authConfigured, shared: dbEnabled });
+    // Quien acaba de entrar también merece saber por qué no conecta la base.
+    return res.status(200).json({
+      admin: true, authConfigured, shared: dbEnabled,
+      ...(dbEnabled ? {} : { storage: diagnostico() }),
+    });
   }
 
   if (req.method === 'DELETE') {

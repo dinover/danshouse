@@ -17,6 +17,29 @@ const TOKEN =
 
 export const dbEnabled = Boolean(URL_ && TOKEN);
 
+// Nombres que puede usar la integración de Vercel, en orden de preferencia.
+const ESPERADAS = [
+  'KV_REST_API_URL', 'KV_REST_API_TOKEN',
+  'UPSTASH_REDIS_REST_URL', 'UPSTASH_REDIS_REST_TOKEN',
+  'REDIS_REST_URL', 'REDIS_REST_TOKEN',
+];
+
+// Estas son de protocolo Redis, no HTTP: si sólo llegaron éstas, no alcanzan.
+const NO_SIRVEN = ['KV_URL', 'REDIS_URL', 'KV_REST_API_READ_ONLY_TOKEN'];
+
+/**
+ * Qué variables ve la función, por nombre. Nunca devuelve valores: sirve para
+ * entender por qué la base no conecta, no para leer credenciales.
+ */
+export function diagnostico() {
+  return {
+    utiles: ESPERADAS.filter(n => Boolean(process.env[n])),
+    inservibles: NO_SIRVEN.filter(n => Boolean(process.env[n])),
+    tieneUrl: Boolean(URL_),
+    tieneToken: Boolean(TOKEN),
+  };
+}
+
 async function comando(...args) {
   const res = await fetch(URL_, {
     method: 'POST',
